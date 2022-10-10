@@ -25,26 +25,26 @@ get_sample <- function(){
   return(new_sample)
 }
 
-resampling_samples <- data.frame(matrix(ncol = 1, nrow = sel_n))
+regular_samples <- data.frame(matrix(ncol = 1, nrow = sel_n))
 
 # Set number of samples
-# resampling samples
+# regular samples
 for (i in 1:sel_num_samples) {
-  resampling_samples[[i]] <- get_sample()
+  regular_samples[[i]] <- get_sample()
 }
 
 # Bootstrap samples
 bootstrap_samples <- data.frame(matrix(ncol = 1, nrow = sel_n))
 
 for (i in 1:sel_num_samples) {
-  bootstrap_samples[[i]] <- sample(resampling_samples[[1]], sel_n,
+  bootstrap_samples[[i]] <- sample(regular_samples[[1]], sel_n,
                                    replace = TRUE)
 }
 
-names(resampling_samples) <- NULL
-resampling_statistics_df <- data.frame(mean = map_dbl(resampling_samples, mean),
-                            sd= map_dbl(resampling_samples, sd),
-                            median= map_dbl(resampling_samples, median)
+names(regular_samples) <- NULL
+regular_statistics_df <- data.frame(mean = map_dbl(regular_samples, mean),
+                            sd= map_dbl(regular_samples, sd),
+                            median= map_dbl(regular_samples, median)
                             )
 
 names(bootstrap_samples) <- NULL
@@ -53,11 +53,25 @@ bootstrap_statistics_df <- data.frame(mean = map_dbl(bootstrap_samples, mean),
                                      median = map_dbl(bootstrap_samples, median)
                                      )
 
-statistics_df <- bind_rows("resampling" = resampling_statistics_df,
+statistics_df <- bind_rows("regular" = regular_statistics_df,
                            "bootstrap" = bootstrap_statistics_df, .id = "type")
+
+statistics_means <- bind_rows("regular" = colMeans(regular_statistics_df),
+                              "bootstrap" = colMeans(bootstrap_statistics_df),
+                              .id = "type")
+
+
+parameter_dic <- list("normal" = c("mean" = sel_mean,
+                                   "sd" = sel_sd,
+                                   "median" = sel_mean),
+                      "uniform" = c("mean" =  (sel_max + sel_min)/2,
+                                    "sd" = sqrt(((sel_max - sel_min)^2)/12),
+                                    "median" = (sel_max + sel_min)/2))
 
 statistics_df %>%
   rename_with(~ gsub(sel_statistic, "target", .x)) %>%
   ggplot(aes(target, color = type, fill=type)) +
          geom_histogram(alpha = 0.2, position = "identity", bins = 20) +
-         labs(x=sel_statistic)
+         labs(x=sel_statistic) +
+         #geom_vline(aes(xintercept = parameter_dic[[sel_distribution]][[sel_statistic]])) +
+         geom_vline(aes(xintercept = mean(target), color=type))
