@@ -118,12 +118,14 @@ server <- function(input, output) {
           ggplot(aes(target, color = type, fill=type)) +
           geom_histogram(alpha = 0.2, position = "identity", bins = input$bins) +
           geom_vline(aes(xintercept = parameter_dic[[input$distribution]][[input$statistic]],
-                         fill="population mean", color="population mean"),
-                     linetype="dashed") +
-          geom_vline(data=statistics_means, aes(xintercept = target,
-                         color=type)) +
-          #geom_vline(aes(xintercept = mean(target), color=type)) +
-          labs(x=input$statistic)
+                         fill = "population mean", color = "population mean"),
+                     linetype = "dashed") +
+          geom_vline(data = statistics_means, aes(xintercept = target,
+                         color = type)) +
+          labs(x = input$statistic, y = "Num of samples",
+               title = paste("Sample's", input$statistic,
+                             "per type of sample vs popupulation's",
+                             input$statistic))
     })
     output$normal.sections <- renderUI(if (input$distribution == "normal") {
       tagList(sliderInput(
