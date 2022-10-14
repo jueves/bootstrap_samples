@@ -2,6 +2,8 @@ library(shiny)
 library(purrr)
 library(dplyr)
 library(ggplot2)
+#install.packages("markdown")
+library(markdown)
 
 ui <- fluidPage(
     titlePanel("Bootstrap samples vs regular samples"),
@@ -63,6 +65,8 @@ ui <- fluidPage(
 ##########
 server <- function(input, output) {
   source("data_generation_funcs.R")
+  group_colors <- c("regular" = "#0daeff", "bootstrap" = "#ff3262", "population mean" = "black")
+  
   output$normal.sections <- renderUI(if (input$distribution == "normal") {
     tagList(sliderInput(
       inputId = "mean",
@@ -129,7 +133,9 @@ server <- function(input, output) {
       labs(x = input$statistic, y = "Num of samples",
            title = paste0("Bootstrap samples's ", input$statistic,
                           "s vs popupulation's ",
-                          input$statistic))
+                          input$statistic)) +
+      scale_fill_manual(values=group_colors) +
+      scale_color_manual(values=group_colors)
     
   })
   output$distPlot <- renderPlot({
@@ -159,7 +165,9 @@ server <- function(input, output) {
       labs(x = input$statistic, y = "Num of samples",
            title = paste("Sample's", input$statistic,
                          "per type of sample vs popupulation's",
-                         input$statistic))
+                         input$statistic)) +
+      scale_fill_manual(values=group_colors) +
+      scale_color_manual(values=group_colors)
   })
 }
 
