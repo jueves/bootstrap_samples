@@ -75,3 +75,29 @@ statistics_df %>%
          labs(x=sel_statistic) +
          #geom_vline(aes(xintercept = parameter_dic[[sel_distribution]][[sel_statistic]])) +
          geom_vline(aes(xintercept = mean(target), color=type))
+
+
+get_statistics_CI <- function(data) {
+  results <- data.frame(matrix(ncol = ncol(data), nrow = 2))
+  for (i in 1:ncol(data)) {
+    data_model <- lm(data[[i]] ~ 1)
+    interval <- confint(data_model, level = 0.95)
+    results[i] <- c(interval[1], interval[2])
+  }
+  names(results) <- names(data)
+  return(results)
+}
+
+get_statistics_quantiles <- function(data) {
+  results <- data.frame(matrix(ncol = ncol(data), nrow = 2))
+  for (i in 1:ncol(data)) {
+    results[i] <- quantile(data[[i]], probs=(c(0.025, 0.975)))
+  }
+  names(results) <- names(data)
+  return(results)
+}
+
+statistics_IC <- bind_rows("regular" = get_statistics_CI(),
+                           "bootstrap" = get_statistics_quantiles(),
+                           .id = "type"
+)
