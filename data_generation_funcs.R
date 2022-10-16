@@ -1,8 +1,7 @@
 # Functions to generate data and get statistics
 
-# Gets sample from the selected distribution
 get_sample <- function(distribution, sample_size, pop_mean, pop_sd, pop_min, pop_max){
-  # Gets new samples from the defined population
+  # Returns a sample from the defined population
   if (distribution == "normal") {
     new_sample <- rnorm(sample_size, pop_mean, pop_sd)
   } else if (distribution == "uniform") {
@@ -13,6 +12,10 @@ get_sample <- function(distribution, sample_size, pop_mean, pop_sd, pop_min, pop
 
 get_statistics_df <- function(distribution, sample_size, num_samples, pop_mean = 0,
                               pop_sd = 1, pop_min = 0, pop_max = 1) {
+  # Generates multiple samples from the defined population, both regular samples
+  # and bootstrap generated samples. Then returns a dataframe with the mean, sd
+  # and median for each sample.
+  
   # Generate regular samples
   regular_samples <- data.frame(matrix(ncol = 1, nrow = sample_size))
   
@@ -44,24 +47,7 @@ get_statistics_df <- function(distribution, sample_size, num_samples, pop_mean =
   
   # Bind both dataframes
   statistics_df <- bind_rows("regular" = regular_statistics_df,
-                             "bootstrap" = bootstrap_statistics_df, .id = "type")
+                             "bootstrap" = bootstrap_statistics_df, .id = "source")
   
   return(statistics_df)
 }
-
-
-# statistics_means <- bind_rows("regular" = colMeans(regular_statistics_df),
-#                               "bootstrap" = colMeans(bootstrap_statistics_df),
-#                               .id = "type") %>%
-#   rename_with(~ sub(input$statistic, "target", .x))
-
-
-# get_statistics_quantiles <- function(data) {
-#   results <- data.frame(matrix(ncol = ncol(data), nrow = 2))
-#   for (i in 1:ncol(data)) {
-#     results[i] <- quantile(data[[i]], probs=(c(0.025, 0.975)))
-#   }
-#   names(results) <- names(data)
-#   return(results)
-# }
-

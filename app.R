@@ -2,7 +2,6 @@ library(shiny)
 library(purrr)
 library(dplyr)
 library(ggplot2)
-#install.packages("markdown")
 library(markdown)
 
 ui <- fluidPage(
@@ -13,30 +12,35 @@ ui <- fluidPage(
       # Settings #
       ############
       sidebarPanel(
+        selectInput("distribution",
+                    "Select a population distribution:",
+                    choices = c("normal", "uniform")
+        ),
+        helpText("Multiple samples will be taken from this distribution."),
+        uiOutput("normal.sections"),
+        uiOutput("uniform.sections"),
+        
+        hr(),
+        
+        selectInput("statistic",
+                    "Select a statistic to be measured",
+                    choices = c("mean", "sd", "median")
+        ),
+        helpText("From each sample, this statistic will be measured."),
+        
         sliderInput("sample_size",
                     "Sample size:",
                     min = 1,
                     max = 100,
                     value = 30
                     ),
-        helpText("Select the size for each of the samples to be taken."),
         sliderInput("num_samples",
                     "Select the number of samples to be created:",
                     min = 1,
                     max = 2000,
                     value = 1000
         ),
-        helpText("It will create n regular samples and n bootstrap samples."),
-        selectInput("statistic",
-                    "Select the statistic to be measured",
-                    choices = c("mean", "sd", "median")
-        ),
-        selectInput("distribution",
-                    "Select population distribution:",
-                    choices = c("normal", "uniform")
-        ),
-        uiOutput("normal.sections"),
-        uiOutput("uniform.sections")
+        helpText("Create n regular samples and n bootstrap samples."),
       ),
 
       ##############
@@ -45,12 +49,12 @@ ui <- fluidPage(
       mainPanel(
         tabsetPanel(
           tabPanel(
-            "CI from bootstrap sample's",
-            plotOutput("plotCI"),
+            "Bootstrap sample's boxplot",
+            plotOutput("plotbox"),
             includeMarkdown("Explanation1.md")
           ),
           tabPanel(
-            "Regular samples vs Bootstrap samples",
+            "Bootstrap samples vs regular samples",
             plotOutput("distPlot"),
             includeMarkdown("Explanation2.md")
           )
@@ -65,7 +69,9 @@ ui <- fluidPage(
 ##########
 server <- function(input, output) {
   source("data_generation_funcs.R")
-  group_colors <- c("regular" = "#0daeff", "bootstrap" = "#ff3262", "population mean" = "black")
+  group_colors <- c("regular" = "#0daeff",
+                    "bootstrap" = "#ff3262",
+                    "population" = "black")
   
   output$normal.sections <- renderUI(if (input$distribution == "normal") {
     tagList(sliderInput(
@@ -102,7 +108,8 @@ server <- function(input, output) {
       )
     )
   })
-  output$plotCI <- renderPlot({
+  
+  output$plotbox <- renderPlot({
     # Create a dictionary with parameters for each population
     parameter_dic <- list("normal" = c("mean" = input$mean,
                                        "sd" = input$sd,
@@ -118,24 +125,19 @@ server <- function(input, output) {
                                        input$sd, input$min, input$max)
     
     
-    # Plot selected statistic
+    # Plot selected statistic distribution vs population's parameter
     statistics_df %>%
       rename_with(~ gsub(input$statistic, "target", .x)) %>%
-      filter(type == "bootstrap") %>%
-      ggplot(aes(target, color = type, fill = type)) + geom_histogram(alpha = 0.2, position = "identity") +
+      filter(source == "bootstrap") %>%
+      ggplot(aes(target, color = source, fill = source)) +
+      geom_boxplot(alpha = 0.2) +
       geom_vline(aes(xintercept = parameter_dic[[input$distribution]][[input$statistic]],
-                     fill = "population mean", color = "population mean"),
+                     fill = "population", color = "population"),
                  linetype = "dashed") +
-      geom_vline(aes(xintercept = quantile(target, probs=(0.025)),
-                                           color = type)) +
-      geom_vline(aes(xintercept = quantile(target, probs=(0.975)), 
-                                           color = type)) +
-      labs(x = input$statistic, y = "Num of samples",
-           title = paste0("Bootstrap samples's ", input$statistic,
-                          "s vs popupulation's ",
-                          input$statistic)) +
-      scale_fill_manual(values=group_colors) +
-      scale_color_manual(values=group_colors)
+      labs(x = input$statistic, title = paste0("Bootstrap samples's ", input$statistic,
+                                               "s vs population's ", input$statistic)) +
+      scale_fill_manual(values = group_colors[2:3]) +
+      scale_color_manual(values = group_colors[2:3])
     
   })
   output$distPlot <- renderPlot({
@@ -154,18 +156,17 @@ server <- function(input, output) {
                                        input$sd, input$min, input$max)
     
     
-    # Plot selected statistic
+    # Plot selected statistic distribution
     statistics_df %>%
       rename_with(~ gsub(input$statistic, "target", .x)) %>%
-      ggplot(aes(target, color = type, fill=type)) +
+      ggplot(aes(target, color = source, fill=source)) +
       geom_histogram(alpha = 0.2, position = "identity") +
       geom_vline(aes(xintercept = parameter_dic[[input$distribution]][[input$statistic]],
-                     fill = "population mean", color = "population mean"),
+                     fill = "population", color = "population"),
                  linetype = "dashed") +
       labs(x = input$statistic, y = "Num of samples",
            title = paste("Sample's", input$statistic,
-                         "per type of sample vs popupulation's",
-                         input$statistic)) +
+                         "per source vs popupulation's", input$statistic)) +
       scale_fill_manual(values=group_colors) +
       scale_color_manual(values=group_colors)
   })
