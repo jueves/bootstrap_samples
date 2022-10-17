@@ -3,7 +3,7 @@
 
 ## To do
 - [x] Add new tab to compare IC instead of the whole distribution of the statistic.
-- [ ] Add explanations.
+- [x] Add explanations.
 - [x] Keep colors consistent.
 - [ ] Add more distributions.
 - [ ] Add a rerun button.

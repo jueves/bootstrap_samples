@@ -26,11 +26,11 @@ ui <- fluidPage(
                     "Select a statistic to be measured",
                     choices = c("mean", "sd", "median")
         ),
-        helpText("From each sample, this statistic will be measured."),
+        helpText("This will be calculated for each sample."),
         
         sliderInput("sample_size",
                     "Sample size:",
-                    min = 1,
+                    min = 0,
                     max = 100,
                     value = 30
                     ),
@@ -49,7 +49,7 @@ ui <- fluidPage(
       mainPanel(
         tabsetPanel(
           tabPanel(
-            "Bootstrap sample's boxplot",
+            "Bootstrap samples's boxplot",
             plotOutput("plotbox"),
             includeMarkdown("Explanation1.md")
           ),
